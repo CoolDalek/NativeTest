@@ -1,0 +1,9 @@
+.idea
+*.iml
+out
+gen
+.bsp
+project/project
+project/target
+target
+.git

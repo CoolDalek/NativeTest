@@ -9,8 +9,8 @@ To compile this project you need:
  - installed sbt
  - installed ammonite shell (if you want to use compiling script)
  
- You can compile project using script you need to run following command from project root:
-  - `./compile <arg>` where `<arg>` is:
+If you want to compile project using script you need to run following command from project root:
+  - `./compile.sc <arg>` where `<arg>` is:
     - `graal` to compile via GraalVM Native Image
     - `native` to compile via ScalaNative
     - `help` to print help
