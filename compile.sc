@@ -68,23 +68,25 @@ def graal(
         "-H:Optimize=2",
         "--no-fallback",
       )
-      if(llvm) {
-        Seq[Shellable](
-          "-H:CompilerBackend=llvm",
-          "-H:Features=org.graalvm.home.HomeFinderFeature",
-          "-H:+SpawnIsolates",
-        ) ++ default
-      } else {
-        default
-      }
+      val compilerDependent =
+        if(llvm) {
+          Seq[Shellable](
+            "-H:CompilerBackend=llvm",
+            "-H:Features=org.graalvm.home.HomeFinderFeature",
+            "-H:+SpawnIsolates",
+          )
+        } else {
+          Seq.empty[Shellable]
+        }
+      val files = Seq[Shellable](
+        "-jar",
+        "target/scala-2.13/NativeTest-assembly-0.1.jar",
+        "target/scala-2.13/graal-compiled"
+      )
+      default ++ compilerDependent ++ files
     }
 
-    %.applyDynamic("native-image")(
-      compilerArgs: _*,
-      "-jar",
-      "target/scala-2.13/NativeTest-assembly-0.1.jar",
-      "target/scala-2.13/graal-compiled"
-    )
+    %.applyDynamic("native-image")(compilerArgs: _*)
     successfullyCompiled("GraalVM Native Image")
   }
 }
