@@ -1,4 +1,7 @@
 #!/usr/local/bin/amm
+
+import java.time.Instant
+
 import ammonite.ops._
 import ammonite.ops.ImplicitWd._
 
@@ -8,8 +11,9 @@ val build = pwd/"build.sbt"
 
 val plugins = pwd/"project"/"plugins.sbt"
 
-@arg(doc = "Compiles project via Scala Native")
-@main
+@main(
+  doc = "Compiles project via Scala Native"
+)
 def native(): Unit = {
   val toBuild =
     """
@@ -38,8 +42,9 @@ def native(): Unit = {
   }
 }
 
-@arg(doc = "Compiles project via GraalVM Native Image")
-@main
+@main(
+  doc = "Compiles project via GraalVM Native Image"
+)
 def graal(): Unit = {
   val toPlugins =
     """
@@ -53,6 +58,10 @@ def graal(): Unit = {
     %sbt "clean; assembly"
     println("Successfully created fat jar.")
     %.applyDynamic("native-image")(
+      "-H:CompilerBackend=llvm",
+      "-H:Optimize=2",
+      "-H:Features=org.graalvm.home.HomeFinderFeature",
+      "-H:+SpawnIsolates",
       "--no-fallback",
       "-jar",
       "target/scala-2.13/NativeTest-assembly-0.1.jar",
@@ -62,8 +71,9 @@ def graal(): Unit = {
   }
 }
 
-@arg(doc = "Print help")
-@main
+@main(
+  doc = "Print help."
+)
 def help(): Unit =
   println(
     """Usage: "./compile.sc <arg>", where <arg> is "native" or "graal" or "help".
@@ -72,11 +82,11 @@ def help(): Unit =
       | "help" - prints this help.
       |""".stripMargin)
 
-def withBackup(func: (Path => Unit) => Unit): Unit = {
+def withBackup(func: (Path => Path) => Unit): Unit = {
   import scala.collection.mutable
   val backups = mutable.HashMap.empty[Path, Path]
 
-  def makeBackup(path: Path): Unit = {
+  def makeBackup(path: Path): Path = {
     println(s"Create backup for $path")
     if(!exists(path)) {
       write(path, "")
@@ -84,6 +94,7 @@ def withBackup(func: (Path => Unit) => Unit): Unit = {
     val backup = Path(s"${path.wrapped.getParent}/${path.baseName}-backup.${path.ext}")
     cp(path, backup)
     backups.addOne(path, backup)
+    path
   }
 
   def applyBackup(backupInfo: (Path, Path)): Unit = {
@@ -94,7 +105,14 @@ def withBackup(func: (Path => Unit) => Unit): Unit = {
     rm! backup
   }
 
-  Try(func(makeBackup))
+  Try(func(makeBackup)).recover {
+    case e =>
+      println("Something goes wrong, make log file with stacktrace.")
+      write(
+        pwd/s"err-${Instant.now()}.log",
+        s"$e\n${e.getStackTrace.mkString("\n")}"
+      )
+  }
 
   backups.foreach(applyBackup)
 }
