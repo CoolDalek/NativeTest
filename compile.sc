@@ -45,7 +45,12 @@ def native(): Unit = {
 @main(
   doc = "Compiles project via GraalVM Native Image"
 )
-def graal(): Unit = {
+def graal(
+           @arg(
+             doc = "Enable llvm as Native Image compilation backend."
+           )
+           llvm: Boolean = false
+         ): Unit = {
   val toPlugins =
     """
       |
@@ -57,12 +62,25 @@ def graal(): Unit = {
     buildModified()
     %sbt "clean; assembly"
     println("Successfully created fat jar.")
+
+    val compilerArgs = {
+      val default = Seq[Shellable](
+        "-H:Optimize=2",
+        "--no-fallback",
+      )
+      if(llvm) {
+        Seq[Shellable](
+          "-H:CompilerBackend=llvm",
+          "-H:Features=org.graalvm.home.HomeFinderFeature",
+          "-H:+SpawnIsolates",
+        ) ++ default
+      } else {
+        default
+      }
+    }
+
     %.applyDynamic("native-image")(
-      "-H:CompilerBackend=llvm",
-      "-H:Optimize=2",
-      "-H:Features=org.graalvm.home.HomeFinderFeature",
-      "-H:+SpawnIsolates",
-      "--no-fallback",
+      compilerArgs: _*,
       "-jar",
       "target/scala-2.13/NativeTest-assembly-0.1.jar",
       "target/scala-2.13/graal-compiled"
