@@ -12,7 +12,7 @@ val build = pwd/"build.sbt"
 val plugins = pwd/"project"/"plugins.sbt"
 
 @main(
-  doc = "Compiles project via Scala Native"
+  doc = "Compile project via Scala Native"
 )
 def native(): Unit = {
   val toBuild =
@@ -43,11 +43,11 @@ def native(): Unit = {
 }
 
 @main(
-  doc = "Compiles project via GraalVM Native Image"
+  doc = "Compile project via GraalVM Native Image"
 )
 def graal(
            @arg(
-             doc = "Enable llvm as Native Image compilation backend."
+             doc = "Enable llvm as Native Image compiler backend."
            )
            llvm: Boolean = false
          ): Unit = {
@@ -96,10 +96,11 @@ def graal(
 )
 def help(): Unit =
   println(
-    """Usage: "./compile.sc <arg>", where <arg> is "native" or "graal" or "help".
-      | "native" - compile project via Scala Native;
-      | "graal" - compile project via GraalVM Native Image;
-      | "help" - prints this help.
+    """Usage: "./compile.sc <native|graal|help>"
+      |  - "native" - compile project via Scala Native
+      |  - "graal --llvm=<true|false>" - compile project via GraalVM Native Image
+      |    - "--llvm" - enable llvm as compiler backend, false by default
+      |  - "help" - prints this help
       |""".stripMargin)
 
 def withBackup(func: (Path => Path) => Unit): Unit = {
@@ -130,7 +131,7 @@ def withBackup(func: (Path => Path) => Unit): Unit = {
       println("Something goes wrong, make log file with stacktrace.")
       write(
         pwd/s"err-${Instant.now()}.log",
-        s"$e\n${e.getStackTrace.mkString("\n")}"
+        s"$e at\n${e.getStackTrace.mkString("\n")}"
       )
   }
 
