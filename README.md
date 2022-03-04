@@ -1,5 +1,5 @@
 # NativeTest
-Test project compiled into binary via ScalaNative or GraalVM Native Image
+Project to test compilation into binary via ScalaNative and GraalVM Native Image
 
 ## Compiling
 
